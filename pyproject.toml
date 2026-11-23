@@ -1,6 +1,6 @@
 [project]
 name = "united-utilities"
-version = "0.3.0"
+version = "0.3.1"
 description = "Async Python client for the United Utilities mobile API (unofficial, reverse-engineered)"
 readme = "README.md"
 authors = [{ name = "Kieran Roper" }]

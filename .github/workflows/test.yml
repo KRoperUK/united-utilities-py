@@ -27,6 +27,10 @@ jobs:
       - run: ruff format --check src tests
       - run: pip install -e ".[dev]"
       - run: mypy
+      # The HA integration pairs with HA 2026.8+, which pins aiohttp==3.14.3.
+      # Fails if our dependency floors ever make the library uninstallable there.
+      - name: Installable alongside Home Assistant's pinned aiohttp
+        run: pip install --dry-run "aiohttp==3.14.3" .
 
   test:
     runs-on: ubuntu-latest

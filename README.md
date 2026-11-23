@@ -82,9 +82,42 @@ client = UnitedUtilitiesClient(customer_id, pin, account_number,
 | `account_details()` | balance, next payment, meter flag, payment plan, bill count |
 | `meter_readings()` | meter details + reading history (`.latest`) |
 | `statement()` | itemised bills & payments |
+| `bill_pdf(document_id)` | a bill as PDF bytes (`document_id` from `statement()`) |
 | `payment_info()` | current balance, minimum payment |
 | `preferences()` | notification preferences |
 | `notifications()` | customer notifications |
+
+## Bill PDFs: tariffs and charges
+
+The API has bill totals and meter readings but not tariffs. The bill PDF does,
+and `parse_bill()` reads it (install the extra: `pip install
+"united-utilities[pdf]"`):
+
+```python
+from united_utilities import parse_bill
+
+latest = next(i for i in await uu.statement() if i.item_type == "BI" and i.document_id)
+bill = parse_bill(await uu.bill_pdf(latest.document_id))
+if bill.trustworthy:
+    print(bill.price_per_m3, bill.standing_charge_per_year)  # e.g. 5.51, 177.59
+else:
+    print(bill.problems)
+```
+
+A `Bill` has the billing period, both meter readings and who read them, every
+charge line (fresh water / wastewater × usage / standing charge, per tariff
+period when a bill spans 1 April), any discount and the total. Some bills are
+payment-plan updates with no charges; those have `itemised == False`.
+
+Parsing matches the bill's wording, so every parse is cross-checked. Line items
+must add up to the total, each line must equal quantity × rate, fresh water and
+wastewater must bill the same volume, and the volume must match the readings.
+Anything that doesn't add up goes in `bill.problems`, `trustworthy` is `False`,
+and `price_per_m3` / `standing_charge_per_year` return `None` instead of a
+possibly wrong figure.
+
+> Bills include the account holder's name, address and bank details. Parse them
+> in memory; don't log or store the PDF.
 
 ## Development
 

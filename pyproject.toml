@@ -26,11 +26,14 @@ classifiers = [
 dependencies = ["aiohttp>=3.9"]
 
 [project.optional-dependencies]
+# Bill PDF parsing (parse_bill). pypdf is pure Python, so it installs anywhere HA does.
+pdf = ["pypdf>=5"]
 dev = [
     "pytest>=9.2.0",
     "pytest-asyncio>=1.5.0",
     "pytest-cov>=7.1.0",
     "aresponses>=3.0",
+    "pypdf>=5",
     "ruff>=0.17.6",
     "mypy>=2.4.1",
 ]

@@ -69,8 +69,7 @@ In Home Assistant, pass the shared session:
 ```python
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-client = UnitedUtilitiesClient(customer_id, pin, account_number,
-                               session=async_get_clientsession(hass))
+client = UnitedUtilitiesClient(customer_id, pin, account_number, session=async_get_clientsession(hass))
 ```
 
 ## Endpoints covered

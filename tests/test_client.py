@@ -292,5 +292,6 @@ async def test_lookup_unregistered_account(session: aiohttp.ClientSession, aresp
 
     aresponses.add(TEST_HOST, "/api/registration/find", "POST", _json({"registrationToken": "reg-token"}))
     aresponses.add(TEST_HOST, "/api/registration/check", "GET", _json({"customerId": None, "validationToken": None}))
-    with pytest.raises(ClientError, match="register in the app"):
+    with pytest.raises(ClientError, match="register in the app") as excinfo:
         await lookup_customer_id("4000000000", "M11AA", session=session, base_url=TEST_BASE_URL)
+    assert excinfo.value.code == "not_registered"

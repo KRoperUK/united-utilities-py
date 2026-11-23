@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/KRoperUK/united-utilities-py/compare/v0.3.1...v0.4.0) (2026-11-23)
+
+
+### Features
+
+* download and parse bill PDFs for tariffs and charges ([8896c84](https://github.com/KRoperUK/united-utilities-py/commit/8896c848d029c66718b90c321c85c459d99e2599))
+* download and parse bill PDFs for tariffs and charges ([36bef08](https://github.com/KRoperUK/united-utilities-py/commit/36bef0818f7391f5a86323f2ee61e4f7a9314a43))
+
+
+### Documentation
+
+* apply ruff 0.17 formatting to the README code sample ([8819c55](https://github.com/KRoperUK/united-utilities-py/commit/8819c5516eb7937ec57f93ac6106ed8dd0d55788))
+
 ## [0.3.1](https://github.com/KRoperUK/united-utilities-py/compare/v0.3.0...v0.3.1) (2026-11-23)
 
 

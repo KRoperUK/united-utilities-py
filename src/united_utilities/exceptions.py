@@ -35,3 +35,11 @@ class AuthError(ClientError):
 
 class NotLoggedInError(ClientError):
     """A data call was made before ``login()`` succeeded (or after a 401)."""
+
+
+class AccountLockedError(AuthError):
+    """HTTP 423: too many failed attempts; the service has locked the account.
+
+    The app's copy says the lock lasts 60 minutes. Retrying during the lock does
+    not help and may extend it.
+    """

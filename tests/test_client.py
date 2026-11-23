@@ -225,3 +225,72 @@ async def test_server_error_raises_client_error(client: UnitedUtilitiesClient, a
     with pytest.raises(ClientError) as excinfo:
         await client.account_details()
     assert excinfo.value.code == "500"
+
+
+async def test_login_locked_raises_account_locked(
+    client: UnitedUtilitiesClient, aresponses: ResponsesMockServer
+) -> None:
+    from united_utilities import AccountLockedError
+
+    aresponses.add(TEST_HOST, "/api/account/login", "POST", aresponses.Response(status=423))
+    with pytest.raises(AccountLockedError) as excinfo:
+        await client.login()
+    assert isinstance(excinfo.value, AuthError)  # callers that only know AuthError still stop
+    assert excinfo.value.code == "423"
+
+
+async def test_lookup_customer_id(session: aiohttp.ClientSession, aresponses: ResponsesMockServer) -> None:
+    from united_utilities import lookup_customer_id
+
+    find: dict[str, Any] = {}
+    check: dict[str, Any] = {}
+    aresponses.add(
+        TEST_HOST,
+        "/api/registration/find",
+        "POST",
+        _capture(find, {"registrationToken": "reg-token", "address": {"addressLine1": "1 Example Street"}}),
+    )
+    aresponses.add(
+        TEST_HOST,
+        "/api/registration/check",
+        "GET",
+        _capture(check, {"customerId": "24000000", "validationToken": "v"}),
+    )
+
+    customer_id = await lookup_customer_id(" 4000000000 ", "m1 1aa", session=session, base_url=TEST_BASE_URL)
+
+    assert customer_id == "24000000"
+    assert find["content_type"] == "application/x-www-form-urlencoded"
+    assert "accountNumber=4000000000" in find["body"]
+    assert "postcode=M11AA" in find["body"]  # spaces removed, upper-cased like the app
+    assert find["headers"]["apiKey"] == API_KEY
+    assert check["headers"]["token"] == "reg-token"
+    assert not session.closed  # caller-owned session left open
+
+
+async def test_lookup_no_match_raises_auth_error(
+    session: aiohttp.ClientSession, aresponses: ResponsesMockServer
+) -> None:
+    from united_utilities import lookup_customer_id
+
+    aresponses.add(TEST_HOST, "/api/registration/find", "POST", aresponses.Response(status=401))
+    with pytest.raises(AuthError):
+        await lookup_customer_id("4000000000", "M11AA", session=session, base_url=TEST_BASE_URL)
+    aresponses.assert_plan_strictly_followed()
+
+
+async def test_lookup_locked_raises(session: aiohttp.ClientSession, aresponses: ResponsesMockServer) -> None:
+    from united_utilities import AccountLockedError, lookup_customer_id
+
+    aresponses.add(TEST_HOST, "/api/registration/find", "POST", aresponses.Response(status=423))
+    with pytest.raises(AccountLockedError):
+        await lookup_customer_id("4000000000", "M11AA", session=session, base_url=TEST_BASE_URL)
+
+
+async def test_lookup_unregistered_account(session: aiohttp.ClientSession, aresponses: ResponsesMockServer) -> None:
+    from united_utilities import ClientError, lookup_customer_id
+
+    aresponses.add(TEST_HOST, "/api/registration/find", "POST", _json({"registrationToken": "reg-token"}))
+    aresponses.add(TEST_HOST, "/api/registration/check", "GET", _json({"customerId": None, "validationToken": None}))
+    with pytest.raises(ClientError, match="register in the app"):
+        await lookup_customer_id("4000000000", "M11AA", session=session, base_url=TEST_BASE_URL)

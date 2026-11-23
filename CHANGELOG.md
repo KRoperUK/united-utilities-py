@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/KRoperUK/united-utilities-py/compare/v0.3.0...v0.3.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* restore the aiohttp floor so it installs on HA 2026.8 ([f5cf901](https://github.com/KRoperUK/united-utilities-py/commit/f5cf9019e85348027c1ab941ee8f39c7882485f5))
+* restore the aiohttp&gt;=3.9 floor so the library installs on Home Assistant 2026.8 ([166d50c](https://github.com/KRoperUK/united-utilities-py/commit/166d50c6f44131cb05a699edd386ea4e12f0cfa4))
+
 ## [0.3.0](https://github.com/KRoperUK/united-utilities-py/compare/v0.2.0...v0.3.0) (2026-11-23)
 
 

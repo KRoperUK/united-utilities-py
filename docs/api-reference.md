@@ -16,11 +16,23 @@ Body (form-urlencoded): `customerId`, `pin`, `platform`.
 ```
 
 - `401 {"attemptsRemaining": N}` on bad credentials. **3 strikes locks the
-  account.** Never retry automatically.
+  account** (`423`, about 60 minutes per the app). Never retry automatically.
 
 ### `POST /api/account/logout`
 
-Invalidates the session token.
+Invalidates the session token. Needs a body: the gateway WAF returns `403` for
+an empty POST, so send `{}`.
+
+## Customer ID lookup (no login)
+
+The app's "register again" flow, first two steps only. Neither sends an SMS or
+changes the registration.
+
+1. `POST /api/registration/find`, form body `accountNumber`, `postcode`
+   (upper-case, no spaces) → `{registrationToken, address}`. `401` = no match,
+   `423` = locked.
+2. `GET /api/registration/check`, header `token: <registrationToken>` →
+   `{customerId, validationToken}`. Null `customerId` = not registered in the app.
 
 ## Data (all require the `token` header)
 
@@ -47,5 +59,5 @@ Account-scoped bodies accept JSON *or* form-encoding; this client sends JSON.
 
 Observed in the app but not implemented here: `api/statement/getpdfbill`
 (PDF bill download), `api/reading` + `api/reading/ValidateMeterRead` (submit a
-meter reading), `api/registration/*`, `api/account/forgottenPin/*`,
+meter reading), the rest of `api/registration/*` (signup, SMS verification), `api/account/forgottenPin/*`,
 `api/payment/request` (Cybersource payment).

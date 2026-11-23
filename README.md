@@ -23,14 +23,20 @@ The mobile API does **not** use your website email/password. It needs:
 - **`pin`** — the numeric PIN you set in the app.
 - **`accountNumber`** — your water account number (for account-scoped calls).
 
-The easiest way to find `customerId` is to capture the app's `api/account/login`
-request once; the body is `customerId=…&pin=…&platform=…` (form-encoded). The
-app pins its TLS certificate, so an intercepting proxy breaks the app's *data*
-calls even though the login call goes through — that's expected.
+The app doesn't show `customerId`, but you can look it up from your account
+number and postcode, the same way the app's "register again" screen does. The
+account must already be registered in the app:
 
-> ⚠️ **Login has a 3-strike lockout.** A wrong PIN decrements
-> `attemptsRemaining`; at zero the account locks. This client never retries
-> `login()`. Do not loop on `AuthError`.
+```python
+from united_utilities import lookup_customer_id
+
+customer_id = await lookup_customer_id("4000000000", "M1 1AA")
+```
+
+> ⚠️ **Login and lookup both lock out.** A wrong PIN decrements
+> `attemptsRemaining`; at zero the account locks (HTTP 423, raised as
+> `AccountLockedError`, which the app says lasts 60 minutes). This client never
+> retries `login()` or `lookup_customer_id()`. Do not loop on `AuthError`.
 
 ## Install
 
@@ -71,6 +77,7 @@ client = UnitedUtilitiesClient(customer_id, pin, account_number,
 
 | Method | Returns |
 | --- | --- |
+| `lookup_customer_id(account_number, postcode)` | the app `customerId` (module function, no login needed) |
 | `login()` / `logout()` | session token lifecycle |
 | `account_details()` | balance, next payment, meter flag, payment plan, bill count |
 | `meter_readings()` | meter details + reading history (`.latest`) |

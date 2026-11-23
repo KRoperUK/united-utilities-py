@@ -22,7 +22,7 @@ from aiohttp import ClientError as AiohttpClientError
 from aiohttp import ClientSession
 
 from .const import API_KEY, BASE_URL, USER_AGENT
-from .exceptions import AuthError, ClientError, NotLoggedInError
+from .exceptions import AccountLockedError, AuthError, ClientError, NotLoggedInError
 from .models import (
     AccountDetails,
     MeterReadings,
@@ -141,9 +141,12 @@ class UnitedUtilitiesClient:
         json: dict[str, Any] | None = None,
         data: dict[str, str] | None = None,
         authed: bool = True,
+        token: str | None = None,
     ) -> dict[str, Any]:
         headers = {"apiKey": self._api_key, "User-Agent": USER_AGENT}
-        if authed:
+        if token is not None:
+            headers["token"] = token
+        elif authed:
             if self._token is None:
                 raise NotLoggedInError("Call login() before making data requests.")
             headers["token"] = self._token
@@ -155,6 +158,12 @@ class UnitedUtilitiesClient:
             ) as resp:
                 if resp.status == 401:
                     return self._handle_401(path, await resp.text())
+                if resp.status == 423:
+                    raise AccountLockedError(
+                        "United Utilities has temporarily locked this account after too many failed attempts.",
+                        code="423",
+                        attempts_remaining=0,
+                    )
                 if resp.status >= 400:
                     raise ClientError(f"HTTP {resp.status} from {path}", code=str(resp.status))
                 body: dict[str, Any] = await resp.json(content_type=None)
@@ -165,15 +174,16 @@ class UnitedUtilitiesClient:
             raise ClientError(f"Request to {path} failed: {err}") from err
 
     def _handle_401(self, path: str, text: str) -> dict[str, Any]:
-        if path.endswith("/login"):
+        if path.endswith("/login") or path.startswith("/api/registration/"):
             attempts = None
             with contextlib.suppress(ValueError, AttributeError):
                 attempts = _json.loads(text).get("attemptsRemaining")
-            raise AuthError(
-                "Login rejected by United Utilities (check customerId/PIN).",
-                code="401",
-                attempts_remaining=attempts,
+            message = (
+                "Login rejected by United Utilities (check customerId/PIN)."
+                if path.endswith("/login")
+                else "No United Utilities account matches that account number and postcode."
             )
+            raise AuthError(message, code="401", attempts_remaining=attempts)
         # Token expired/invalid on a data call. Clear it; caller re-logs in ONCE.
         self._token = None
         raise NotLoggedInError("Session token rejected (401); log in again.")
@@ -193,3 +203,44 @@ class UnitedUtilitiesClient:
         tb: TracebackType | None,
     ) -> None:
         await self.close()
+
+
+async def lookup_customer_id(
+    account_number: str,
+    postcode: str,
+    *,
+    session: ClientSession | None = None,
+    api_key: str = API_KEY,
+    base_url: str = BASE_URL,
+) -> str:
+    """Return the app ``customerId`` for an account that is already registered in the app.
+
+    Replays the first two steps of the app's "register again" flow:
+    ``registration/find`` (account number + postcode) then ``registration/check``.
+    Neither step changes the registration or sends an SMS; the app only acts on
+    the result after the user confirms.
+
+    Raises :class:`AuthError` when nothing matches and :class:`AccountLockedError`
+    after too many failed attempts. Like ``login()``, this is never retried.
+    """
+    client = UnitedUtilitiesClient("", "", session=session, api_key=api_key, base_url=base_url)
+    try:
+        found = await client._request(
+            "POST",
+            "/api/registration/find",
+            data={"accountNumber": account_number.strip(), "postcode": postcode.replace(" ", "").upper()},
+            authed=False,
+        )
+        registration_token = found.get("registrationToken")
+        if not registration_token:
+            raise AuthError("No United Utilities account matches that account number and postcode.")
+        checked = await client._request("GET", "/api/registration/check", token=registration_token)
+        customer_id = checked.get("customerId")
+        if not customer_id:
+            raise ClientError(
+                "This account isn't registered in the United Utilities app yet; register in the app first.",
+                code="not_registered",
+            )
+        return str(customer_id)
+    finally:
+        await client.close()

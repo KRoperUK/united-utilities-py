@@ -238,7 +238,8 @@ async def lookup_customer_id(
         customer_id = checked.get("customerId")
         if not customer_id:
             raise ClientError(
-                "This account isn't registered in the United Utilities app yet; register in the app first."
+                "This account isn't registered in the United Utilities app yet; register in the app first.",
+                code="not_registered",
             )
         return str(customer_id)
     finally:

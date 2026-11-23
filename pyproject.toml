@@ -1,0 +1,79 @@
+[project]
+name = "united-utilities"
+version = "0.1.0"
+description = "Async Python client for the United Utilities mobile API (unofficial, reverse-engineered)"
+readme = "README.md"
+authors = [{ name = "Kieran Roper" }]
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["united-utilities", "water", "utility", "asyncio", "homeassistant"]
+# 3.12 is the floor. Deliberately below the consuming integration's floor so the
+# library stays usable standalone and on older Home Assistant releases.
+requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Framework :: AsyncIO",
+    "Topic :: Home Automation",
+    "Typing :: Typed",
+]
+dependencies = ["aiohttp>=3.9"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=5",
+    "aresponses>=3.0",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/KRoperUK/united-utilities-py"
+Repository = "https://github.com/KRoperUK/united-utilities-py"
+Issues = "https://github.com/KRoperUK/united-utilities-py/issues"
+Changelog = "https://github.com/KRoperUK/united-utilities-py/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+united_utilities = ["py.typed"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src/united_utilities", "tests"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/united_utilities"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80

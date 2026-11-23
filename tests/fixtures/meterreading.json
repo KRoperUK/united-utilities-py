@@ -1,0 +1,18 @@
+{
+  "details": {
+    "meterLocation": "IN",
+    "serialNumber": "00A000000",
+    "numberOfDials": 4,
+    "windowStartDate": "09042027",
+    "windowEndDate": "12052027",
+    "lastRoutineRead": "1975",
+    "lastReadingType": "C",
+    "errorCode": "0000",
+    "errorText": "Success"
+  },
+  "readings": [
+    {"date": "21112026", "value": "1975", "readingType": "C"},
+    {"date": "08102026", "value": "1965", "readingType": "R"}
+  ],
+  "nextReadingDate": "09042027"
+}

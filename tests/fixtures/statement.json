@@ -1,0 +1,26 @@
+{
+  "history": [
+    {
+      "itemType": "BI",
+      "date": "21112026",
+      "amount": 76.51,
+      "newBalance": 80.58,
+      "billingPeriod": {"billPeriodStartDate": "09102026", "billPeriodEndDate": "21112026"},
+      "previousBalance": 4.07,
+      "billCancelled": false,
+      "documentId": "00000000",
+      "billReadStatus": "Y"
+    },
+    {
+      "itemType": "PA",
+      "date": "23102026",
+      "amount": 46.90,
+      "newBalance": 0.0,
+      "billingPeriod": null,
+      "previousBalance": 0.0,
+      "billCancelled": null,
+      "documentId": null,
+      "billReadStatus": null
+    }
+  ]
+}

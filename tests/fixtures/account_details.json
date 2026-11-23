@@ -1,0 +1,17 @@
+{
+  "nextPaymentDate": "23112026",
+  "nextPaymentDue": 51.78,
+  "accountHistory": [
+    {"amount": 76.51, "date": "21112026", "type": "BI", "billCancelled": false},
+    {"amount": 46.90, "date": "23102026", "type": "PA", "billCancelled": null}
+  ],
+  "isOnMeter": true,
+  "canSubmitMeterReading": true,
+  "paymentPlan": "DD",
+  "paymentPlanStatus": "AC",
+  "isActive": true,
+  "hasMissedPayment": false,
+  "accountBalance": 80.58,
+  "billingPreference": "E",
+  "getUnreadBillCount": 2
+}

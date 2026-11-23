@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .bill import Bill, BillReading, ChargeLine, parse_bill, parse_bill_text
 from .client import UnitedUtilitiesClient, lookup_customer_id
 from .const import API_KEY, BASE_URL
 from .exceptions import AccountLockedError, AuthError, ClientError, NotLoggedInError
@@ -24,7 +25,10 @@ __all__ = [
     "AccountHistoryItem",
     "AccountLockedError",
     "AuthError",
+    "Bill",
+    "BillReading",
     "BillingPeriod",
+    "ChargeLine",
     "ClientError",
     "MeterDetails",
     "MeterReading",
@@ -35,4 +39,6 @@ __all__ = [
     "StatementItem",
     "UnitedUtilitiesClient",
     "lookup_customer_id",
+    "parse_bill",
+    "parse_bill_text",
 ]

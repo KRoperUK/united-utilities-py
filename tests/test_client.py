@@ -295,3 +295,54 @@ async def test_lookup_unregistered_account(session: aiohttp.ClientSession, aresp
     with pytest.raises(ClientError, match="register in the app") as excinfo:
         await lookup_customer_id("4000000000", "M11AA", session=session, base_url=TEST_BASE_URL)
     assert excinfo.value.code == "not_registered"
+
+
+async def test_bill_pdf_decodes_base64_json_string(
+    client: UnitedUtilitiesClient, aresponses: ResponsesMockServer
+) -> None:
+    import base64
+
+    captured: dict[str, Any] = {}
+    pdf = b"%PDF-1.4 synthetic"
+    _add_login(aresponses)
+    aresponses.add(
+        TEST_HOST,
+        "/api/statement/getpdfbill",
+        "POST",
+        _capture(captured, base64.b64encode(pdf).decode()),
+    )
+    await client.login()
+
+    assert await client.bill_pdf("00000000") == pdf
+    assert json.loads(captured["body"]) == {"AccountNumber": "4000000000", "documentId": "00000000"}
+    assert captured["headers"]["token"] == "t"
+
+
+async def test_bill_pdf_rejects_non_pdf_payloads(
+    client: UnitedUtilitiesClient, aresponses: ResponsesMockServer
+) -> None:
+    import base64
+
+    from united_utilities import ClientError
+
+    _add_login(aresponses)
+    for payload in ({"unexpected": True}, "not base64 !!", base64.b64encode(b"<html>").decode()):
+        aresponses.add(TEST_HOST, "/api/statement/getpdfbill", "POST", _json(payload))
+    await client.login()
+
+    for _ in range(3):
+        with pytest.raises(ClientError):
+            await client.bill_pdf("00000000")
+
+
+async def test_object_endpoints_reject_non_object_json(
+    client: UnitedUtilitiesClient, aresponses: ResponsesMockServer
+) -> None:
+    from united_utilities import ClientError
+
+    _add_login(aresponses)
+    aresponses.add(TEST_HOST, "/api/account/details", "POST", _json(["not", "an", "object"]))
+    await client.login()
+
+    with pytest.raises(ClientError, match="JSON object"):
+        await client.account_details()

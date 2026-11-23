@@ -42,10 +42,30 @@ changes the registration.
 | `/api/reading/meterreading` | POST | `{accountNumber}` | `MeterReadings` |
 | `/api/payment` | POST | `{accountNumber}` | `PaymentInfo` |
 | `/api/statement` | POST | `{accountNumber}` | `StatementItem[]` (`history`) |
+| `/api/statement/getpdfbill` | POST | `{AccountNumber, documentId}` (note the capital `A`) | bill PDF, base64 inside a JSON string |
 | `/api/account/preferences` | GET | — | `Preferences` |
 | `/api/account/GetCustomerNotifications` | GET | — | `list` |
 
 Account-scoped bodies accept JSON *or* form-encoding; this client sends JSON.
+
+## Bill PDFs
+
+`documentId` is on each `BI` item from `/api/statement`. A bill is a 3–4 page
+A4 PDF with real text (not a scan), around 90–165 KB. Itemised bills have:
+
+- **Billing period** (`9 October 2026 - 21 November 2026`)
+- Previous and current **readings** (`OUR READING` / `YOUR READING` /
+  `ESTIMATED READING`) with dates, and the volume used (`10m³ (10,000 litres)`)
+- **Your charges**: fresh water (left column) and wastewater (right), each with
+  `Usage N m³ @ £r per m³ = £x` and `Standing charge D days @ £r a year = £x`.
+  A bill spanning 1 April has one block per tariff, each headed
+  `Charges for: <start> - <end>`.
+- Optional `Direct Debit discount £5.00 (cr)`, then `Your new charges £x`
+
+Payment-plan and bank-detail updates are also issued as bills, with only the
+balance and Direct Debit schedule. The fresh water / wastewater columns only
+stay paired on one line in pypdf's `layout` extraction mode, so `parse_bill`
+uses that mode for charges and plain mode for everything else.
 
 ## Data quirks
 
@@ -57,7 +77,7 @@ Account-scoped bodies accept JSON *or* form-encoding; this client sends JSON.
 
 ## Not yet wrapped
 
-Observed in the app but not implemented here: `api/statement/getpdfbill`
-(PDF bill download), `api/reading` + `api/reading/ValidateMeterRead` (submit a
-meter reading), the rest of `api/registration/*` (signup, SMS verification), `api/account/forgottenPin/*`,
+Observed in the app but not implemented here: `api/reading` +
+`api/reading/ValidateMeterRead` (submit a meter reading), the rest of
+`api/registration/*` (signup, SMS verification), `api/account/forgottenPin/*`,
 `api/payment/request` (Cybersource payment).

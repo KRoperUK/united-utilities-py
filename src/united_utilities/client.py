@@ -12,6 +12,8 @@ retries ``login()``. Do not loop on :class:`AuthError`.
 
 from __future__ import annotations
 
+import base64
+import binascii
 import contextlib
 import json as _json
 import logging
@@ -117,6 +119,28 @@ class UnitedUtilitiesClient:
         data = await self._request("GET", "/api/account/GetCustomerNotifications")
         return list(data.get("notifications") or [])
 
+    async def bill_pdf(self, document_id: str, account_number: str | None = None) -> bytes:
+        """Download a bill as PDF bytes. ``document_id`` comes from :meth:`statement`.
+
+        The PDF contains the account holder's name and address; don't log or persist it.
+        Parse it with :func:`united_utilities.parse_bill` (needs the ``pdf`` extra).
+        """
+        # The endpoint returns the PDF base64-encoded inside a JSON string.
+        encoded = await self._send(
+            "POST",
+            "/api/statement/getpdfbill",
+            json={"AccountNumber": self._require_account(account_number), "documentId": document_id},
+        )
+        if not isinstance(encoded, str):
+            raise ClientError("Unexpected bill PDF response shape.")
+        try:
+            pdf = base64.b64decode(encoded, validate=True)
+        except binascii.Error as err:
+            raise ClientError("Bill PDF response was not valid base64.") from err
+        if not pdf.startswith(b"%PDF"):
+            raise ClientError("Bill response was not a PDF.")
+        return pdf
+
     # -- internals -----------------------------------------------------------
 
     def _ensure_session(self) -> ClientSession:
@@ -143,6 +167,23 @@ class UnitedUtilitiesClient:
         authed: bool = True,
         token: str | None = None,
     ) -> dict[str, Any]:
+        """Send a request whose response must be a JSON object."""
+        body = await self._send(method, path, json=json, data=data, authed=authed, token=token)
+        if not isinstance(body, dict):
+            raise ClientError(f"Expected a JSON object from {path}")
+        return body
+
+    async def _send(
+        self,
+        method: str,
+        path: str,
+        *,
+        json: dict[str, Any] | None = None,
+        data: dict[str, str] | None = None,
+        authed: bool = True,
+        token: str | None = None,
+    ) -> Any:
+        """Send a request and return the decoded JSON body, whatever its type."""
         headers = {"apiKey": self._api_key, "User-Agent": USER_AGENT}
         if token is not None:
             headers["token"] = token
@@ -166,7 +207,7 @@ class UnitedUtilitiesClient:
                     )
                 if resp.status >= 400:
                     raise ClientError(f"HTTP {resp.status} from {path}", code=str(resp.status))
-                body: dict[str, Any] = await resp.json(content_type=None)
+                body: Any = await resp.json(content_type=None)
                 return body
         except (ClientError, NotLoggedInError):
             raise

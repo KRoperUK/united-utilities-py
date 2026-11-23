@@ -21,7 +21,9 @@ classifiers = [
     "Topic :: Home Automation",
     "Typing :: Typed",
 ]
-dependencies = ["aiohttp>=3.14.5"]
+# Keep this floor low: Home Assistant pins aiohttp exactly (2026.8 uses 3.14.3), so
+# raising it makes the library uninstallable on older HA releases.
+dependencies = ["aiohttp>=3.9"]
 
 [project.optional-dependencies]
 dev = [

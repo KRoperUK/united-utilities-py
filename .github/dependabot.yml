@@ -14,3 +14,21 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+
+  # Python runtime + dev dependencies declared in pyproject.toml.
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    labels:
+      - "dependencies"
+      - "python"
+    groups:
+      python:
+        patterns:
+          - "*"

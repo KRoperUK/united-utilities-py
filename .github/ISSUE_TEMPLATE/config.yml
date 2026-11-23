@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: API reference
+    url: https://github.com/KRoperUK/united-utilities-py/blob/main/docs/api-reference.md
+    about: Endpoints, auth flow, the 3-strike login lockout and data quirks are documented here. Please read before opening an issue.
